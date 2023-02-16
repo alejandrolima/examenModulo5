@@ -1,0 +1,20 @@
+#+TITLE: ABI Backend Django
+
+
+* Pasos para levantar el sistema
+
+** Configuraciión del entorno virtual
+
+Instalar pipenv
+
+#+BEGIN_SRC bash
+sudo pip3 install pipenv
+#+END_SRC
+
+Instalar las dependencias del proyecto
+
+#+BEGIN_SRC bash
+pipenv install
+#+END_SRC
+
+** Configuración de base de datos

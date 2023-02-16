@@ -1,0 +1,159 @@
+#+TITLE: Instalación del sistema
+
+Pasos a seguir para realizar la instalación del sistema en un servidor
+
+** Dependencias
+- Python
+- Pip3
+- Git
+- Postgres
+- Nginx
+
+** Clonar el repositorio
+Usando git, clonar el repositorio del proyecto con las credenciales apropiadas.
+#+BEGIN_SRC bash
+git clone git@git.sekkom.com:yankee/abi-backend-python.git
+#+END_SRC
+
+Alternativamente, por http:
+#+BEGIN_SRC bash
+git clone http://git.sekkom.com/yankee/abi-backend-python.git
+#+END_SRC
+
+** Instalar pipenv
+
+#+BEGIN_SRC bash
+sudo pip3 install pipenv
+#+END_SRC
+
+** Instalar dependencias
+
+Moverse al directorio raíz del proyecto
+
+#+BEGIN_SRC bash
+cd abi-backend-python
+#+END_SRC
+
+Instalar las dependencias del proyecto usando pipenv
+
+#+BEGIN_SRC bash
+pipenv install
+#+END_SRC
+
+La versión de python recomendada es 3.8, en caso de no estar disponible, puede
+usarse python3.7, para seleccionar otra versión de python:
+
+#+BEGIN_SRC bash
+pipenv --python /usr/bin/python3.7 install
+#+END_SRC
+
+=/usr/bin/python3.7= es la ubicación del intérprete de python que se quiere
+usar.
+
+** Creación de base de datos
+
+Debe crearse una base de datos con el nombre =abidb=.
+
+#+BEGIN_SRC postgres
+#psql
+CREATE DATABASE abidb;
+#+END_SRC
+
+** Configuración y credenciales de base de datos
+
+Las credenciales de acceso a la base de datos no se encuentran en el
+repositorio, es necesario agregar un archivo que las contenga en el directorio
+=abi-backend-python/abi_backend/abi_backend/=, el archivo deberá tener el nombre
+=env.py= y tener el siguiente contenido:
+
+#+BEGIN_SRC python
+NAME = "abidb"
+USER = "postgres"
+PASSWORD = "abidb"
+HOST = "localhost"
+#+END_SRC
+
+Indicando el nombre de la base de datos, el usuario, contraseña y host del
+servidor de base de datos.
+
+** Inicialización del entorno virtual
+
+Las dependencias del proyecto se instalan en un entorno virtual desde el cual
+debe ejecutarse el proyecto, para inicializarlo usar el comando:
+
+#+BEGIN_SRC bash
+pipenv shell
+#+END_SRC
+
+Para otras versiones de python
+
+#+BEGIN_SRC bash
+pipenv --python /usr/bin/python3.7 shell
+#+END_SRC
+
+** Migraciones de base de datos
+
+Con el entorno virtual inicializado, nos movemos al directorio
+=abi-backend-python/abi_backend/= y ejecutamos el comando:
+
+#+BEGIN_SRC bash
+python manage.py migrate
+#+END_SRC
+
+** Creación de usuario administrador
+
+Con el entorno virtual inicializado, en el mismo directorio
+=abi-backend-python/abi_backend/= ejecutamos el comando:
+
+#+BEGIN_SRC bash
+python manage.py createsuperuser
+#+END_SRC
+
+Se nos solicitará definir credenciales para un usuario administrador del
+sistema, con el que podremos iniciar sesión en el panel de administración.
+
+** Generar archivos estáticos
+
+Para generar los archivos estáticos del proyecto, ejecutar el comando:
+
+#+BEGIN_SRC bash
+python manage.py collectstatic
+#+END_SRC
+
+Con el entorno virtual inicializado, desde el directorio
+=abi-backend-python/abi_backend/=.
+
+** Ejecución del sistema
+
+Con el entorno virtual inicializado, moverse al directorio
+=abi-backend-python/abi_backend/= y ejecutar el proyecto con el comando:
+
+#+BEGIN_SRC bash
+gunicorn -c gunicorn-config.py abi_backend.wsgi:application
+#+END_SRC
+
+El proyecto se ejecutará en el puerto 8000.
+
+** Configuración de nginx
+
+Para servir el proyecto y los archivos estáticos en el puerto 80, es necesario
+usar un servidor web como nginx, creamos un sitio que configuraremos como sigue:
+
+#+BEGIN_SRC nginx
+server {
+
+        listen 80;
+        server_name 192.168.30.216;
+
+        location /static/ {
+                root /home/jesus/abi-backend-python;
+        }
+
+        location / {
+                proxy_pass http://192.168.30.216:8000;
+        }
+
+}
+#+END_SRC
+
+Finalmente el proyecto estará ejecutándose en el puerto 80.
